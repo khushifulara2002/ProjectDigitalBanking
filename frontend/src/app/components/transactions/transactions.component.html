@@ -1,0 +1,134 @@
+<div class="transactions-container">
+  <div class="header-bar" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
+    <div>
+      <h2 style="margin: 0; font-size: 26px; font-weight: 800; color: #0f172a;">Account Statements & Ledger</h2>
+      <p style="margin: 4px 0 0 0; color: #64748b; font-size: 14px;">Search, filter, and download incoming credited deposits & outgoing transfers</p>
+    </div>
+
+    <!-- PDF Download Button -->
+    <button (click)="downloadPDFStatement()" class="btn-primary" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); font-size: 13px; height: 42px;">
+      📥 Download PDF Statement
+    </button>
+  </div>
+
+  <!-- Filter Card -->
+  <div class="card filter-card" style="padding: 24px; margin-bottom: 28px;">
+    <div class="filter-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; align-items: flex-end;">
+      
+      <div class="filter-group">
+        <label style="display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px; text-transform: uppercase;">Select Account</label>
+        <select [(ngModel)]="selectedAccount" (change)="onAccountChange()">
+          <option *ngFor="let acc of myAccounts" [value]="acc.accountNumber">
+            {{ acc.accountNumber }} ({{ acc.accountType }})
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label style="display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px; text-transform: uppercase;">Transaction Type</label>
+        <select [(ngModel)]="filterType">
+          <option value="">All Types</option>
+          <option value="DEPOSIT">DEPOSIT ONLY</option>
+          <option value="WITHDRAWAL">WITHDRAWAL ONLY</option>
+          <option value="TRANSFER">TRANSFER ONLY</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label style="display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px; text-transform: uppercase;">From Date</label>
+        <input type="date" [(ngModel)]="startDate">
+      </div>
+
+      <div class="filter-group">
+        <label style="display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px; text-transform: uppercase;">To Date</label>
+        <input type="date" [(ngModel)]="endDate">
+      </div>
+
+      <button (click)="onFilterSubmit()" class="btn-primary" style="height: 44px; margin-top: auto;">
+        Filter Ledger
+      </button>
+
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">⌛ Loading transaction ledger...</div>
+
+  <!-- Transactions Table -->
+  <div *ngIf="!loading && pagedTransactions && pagedTransactions.content.length > 0">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Reference</th>
+          <th>Flow</th>
+          <th>Account & Counterparty Details</th>
+          <th>Amount</th>
+          <th>Description / Note</th>
+          <th>Timestamp</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let txn of pagedTransactions.content">
+          <td class="txn-ref">{{ txn.transactionReference }}</td>
+          
+          <!-- Flow Badge -->
+          <td>
+            <span *ngIf="txn.type === 'DEPOSIT' || txn.targetAccountNumber === selectedAccount" class="type-pill type-deposit">
+              CREDIT
+            </span>
+            <span *ngIf="txn.type !== 'DEPOSIT' && txn.targetAccountNumber !== selectedAccount" class="type-pill type-withdraw">
+              DEBIT
+            </span>
+          </td>
+
+          <!-- Counterparty Details -->
+          <td class="account-route">
+            <!-- Incoming Credit to current account -->
+            <div *ngIf="txn.targetAccountNumber === selectedAccount">
+              <span style="color: #059669; font-weight: 700;">Credited From:</span> 
+              {{ txn.sourceAccountNumber }} 
+              <span *ngIf="txn.sourceAccountOwnerName" style="color: #4f46e5; font-weight: 700;">({{ txn.sourceAccountOwnerName }})</span>
+            </div>
+
+            <!-- Outgoing Debit from current account -->
+            <div *ngIf="txn.targetAccountNumber && txn.sourceAccountNumber === selectedAccount">
+              <span style="color: #d97706; font-weight: 700;">Debited To:</span> 
+              {{ txn.targetAccountNumber }} 
+              <span *ngIf="txn.targetAccountOwnerName" style="color: #4f46e5; font-weight: 700;">({{ txn.targetAccountOwnerName }})</span>
+            </div>
+
+            <!-- Deposit or Withdrawal -->
+            <div *ngIf="!txn.targetAccountNumber">
+              {{ txn.sourceAccountNumber }}
+            </div>
+          </td>
+
+          <!-- Amount -->
+          <td class="txn-amount" [class.amount-green]="txn.type === 'DEPOSIT' || txn.targetAccountNumber === selectedAccount" [class.amount-red]="txn.type !== 'DEPOSIT' && txn.targetAccountNumber !== selectedAccount">
+            {{ (txn.type === 'DEPOSIT' || txn.targetAccountNumber === selectedAccount) ? '+' : '-' }}₹{{ txn.amount | number:'1.2-2' }}
+          </td>
+
+          <td class="txn-desc">{{ txn.description }}</td>
+          <td class="txn-date">{{ txn.createdAt | date:'medium' }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination Controls -->
+    <div class="pagination-bar">
+      <button (click)="prevPage()" [disabled]="currentPage === 0" class="btn-secondary">
+        ← Previous Page
+      </button>
+
+      <span class="page-indicator">Page {{ currentPage + 1 }} of {{ pagedTransactions.totalPages }}</span>
+
+      <button (click)="nextPage()" [disabled]="pagedTransactions.last" class="btn-primary">
+        Next Page →
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && pagedTransactions && pagedTransactions.content.length === 0" class="card empty-transactions">
+    📄 No transactions match your specified filters.
+  </div>
+</div>

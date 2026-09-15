@@ -1,0 +1,87 @@
+<div class="transfer-page">
+  <div class="card transfer-card">
+    <div class="card-header-bar">
+      <h2>💸 Transfer Funds</h2>
+      <p>Send money instantly to any active bank account or saved payee</p>
+    </div>
+
+    <div *ngIf="successMessage" class="alert-success">
+      {{ successMessage }}
+    </div>
+
+    <div *ngIf="errorMessage" class="alert-danger">
+      {{ errorMessage }}
+    </div>
+
+    <form [formGroup]="transferForm" (ngSubmit)="onSubmit()">
+      <!-- Source Account Selector -->
+      <div class="form-group">
+        <label>From Account (Source)</label>
+        <select formControlName="sourceAccountNumber">
+          <option *ngFor="let acc of myAccounts" [value]="acc.accountNumber">
+            {{ acc.accountNumber }} (Available: ₹{{ acc.balance | number:'1.2-2' }})
+          </option>
+        </select>
+      </div>
+
+      <!-- Saved Beneficiary Contact Selector -->
+      <div class="form-group" style="background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px dashed #cbd5e1;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <label style="margin: 0; color: #4f46e5; font-weight: 700;">⭐ Choose Saved Payee (Beneficiary)</label>
+          <button type="button" (click)="toggleBeneficiaryModal()" style="background: transparent; color: #4f46e5; border: none; font-size: 12px; font-weight: 700; cursor: pointer;">
+            {{ showAddBeneficiaryModal ? '✕ Close' : '+ Save New Payee' }}
+          </button>
+        </div>
+
+        <!-- Add Beneficiary Inline Form -->
+        <div *ngIf="showAddBeneficiaryModal" [formGroup]="beneficiaryForm" style="background: #ffffff; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 12px;">
+          <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #0f172a;">Save Contact to Database</h4>
+          <div style="display: flex; gap: 10px; margin-bottom: 8px;">
+            <input type="text" formControlName="name" placeholder="Payee Name (e.g. Shreya)" style="padding: 8px;">
+            <input type="text" formControlName="accountNumber" placeholder="ACCXXXXXXXXXX" style="padding: 8px;">
+          </div>
+          <button type="button" (click)="onAddBeneficiarySubmit()" [disabled]="beneficiaryForm.invalid || beneficiaryLoading" class="btn-primary" style="padding: 6px 14px; font-size: 12px;">
+            {{ beneficiaryLoading ? 'Saving...' : 'Save Payee Contact' }}
+          </button>
+        </div>
+
+        <select (change)="onSelectBeneficiary($event)" style="margin-top: 4px;">
+          <option value="">-- Or Select Saved Beneficiary --</option>
+          <option *ngFor="let b of myBeneficiaries" [value]="b.accountNumber">
+            👤 {{ b.name }} ({{ b.accountNumber }}) - {{ b.bankName }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Recipient Account Input -->
+      <div class="form-group">
+        <label>To Account Number (Recipient)</label>
+        <input type="text" formControlName="targetAccountNumber" placeholder="ACC-XXXXXXXXXX">
+        
+        <!-- Auto-Fetched Recipient Name Badge -->
+        <div *ngIf="recipientLoading" style="font-size: 12px; color: #64748b; margin-top: 6px;">
+          ⌛ Verifying account & fetching payee name...
+        </div>
+        <div *ngIf="recipientName" style="background: #e0e7ff; border: 1px solid #c7d2fe; color: #3730a3; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+          <span>👤 Verified Payee:</span>
+          <span style="font-weight: 800; font-size: 14px; color: #1e1b4b;">{{ recipientName }}</span>
+          <span style="margin-left: auto; color: #059669; font-weight: 700; background: #d1fae5; padding: 2px 8px; border-radius: 12px; font-size: 11px;">✓ Active Account</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Transfer Amount (₹)</label>
+        <input type="number" formControlName="amount" placeholder="0.00">
+      </div>
+
+      <div class="form-group">
+        <label>Description / Payment Note</label>
+        <input type="text" formControlName="description" placeholder="Rent, invoice, transfer note...">
+      </div>
+
+      <button type="submit" [disabled]="transferForm.invalid || loading" class="btn-primary btn-block">
+        {{ loading ? 'Processing Money Transfer...' : 'Confirm & Transfer Money ➔' }}
+      </button>
+    </form>
+  </div>
+</div>

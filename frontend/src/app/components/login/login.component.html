@@ -1,0 +1,50 @@
+<div class="login-page">
+  <div class="card login-card">
+    <div class="login-brand">
+      <span>🏛️</span>
+      <h2>AetherBank Portal</h2>
+      <p>Select your portal access level to continue</p>
+    </div>
+
+    <!-- Dual Role Selector Tabs -->
+    <div class="role-selector-tabs">
+      <button type="button" 
+              class="role-tab" 
+              [class.active-tab]="selectedRole === 'CUSTOMER'" 
+              (click)="selectRole('CUSTOMER')">
+        👤 Customer Login
+      </button>
+
+      <button type="button" 
+              class="role-tab admin-tab" 
+              [class.active-tab]="selectedRole === 'ADMIN'" 
+              (click)="selectRole('ADMIN')">
+        🛡️ Admin Portal
+      </button>
+    </div>
+
+    <div *ngIf="errorMessage" class="error-banner">
+      {{ errorMessage }}
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label>{{ selectedRole === 'ADMIN' ? 'Administrator Email' : 'Customer Email' }}</label>
+        <input type="email" formControlName="email" [placeholder]="selectedRole === 'ADMIN' ? 'superadmin@digitalbank.com' : 'name@domain.com'">
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" formControlName="password" placeholder="••••••••">
+      </div>
+
+      <button type="submit" [disabled]="loginForm.invalid || loading" class="btn-primary btn-block">
+        {{ loading ? 'Authenticating...' : (selectedRole === 'ADMIN' ? 'Sign In as System Admin ➔' : 'Sign In as Customer ➔') }}
+      </button>
+    </form>
+
+    <div *ngIf="selectedRole === 'CUSTOMER'" class="login-footer">
+      New customer? <a routerLink="/register">Open an account</a>
+    </div>
+  </div>
+</div>

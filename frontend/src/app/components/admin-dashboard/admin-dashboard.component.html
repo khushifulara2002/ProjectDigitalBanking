@@ -1,0 +1,159 @@
+<div class="admin-container">
+  <!-- Header Bar -->
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">🛡️ System Administration Panel</h1>
+      <p class="admin-subtitle">Master oversight of banking customers, account freezes, and audit logs</p>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="alert-success">
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="errorMessage" class="alert-danger">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Stat Cards Grid -->
+  <div class="metrics-grid">
+    <div class="card metric-card">
+      <div class="metric-icon icon-users">👥</div>
+      <div>
+        <div class="metric-label">Total Registered Customers</div>
+        <div class="metric-value">{{ users.length }} Users</div>
+      </div>
+    </div>
+
+    <div class="card metric-card">
+      <div class="metric-icon icon-accounts">🏦</div>
+      <div>
+        <div class="metric-label">System Bank Accounts</div>
+        <div class="metric-value">{{ accounts.length }} Accounts</div>
+      </div>
+    </div>
+
+    <div class="card metric-card">
+      <div class="metric-icon icon-wealth">💰</div>
+      <div>
+        <div class="metric-label">Total System Liquidity</div>
+        <div class="metric-value">₹{{ totalLiquidity | number:'1.2-2' }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Navigation Tabs -->
+  <div class="admin-tabs">
+    <button class="tab-btn" [class.active-tab]="activeTab === 'ACCOUNTS'" (click)="activeTab = 'ACCOUNTS'">
+      🏦 Bank Accounts & Freezes
+    </button>
+    <button class="tab-btn" [class.active-tab]="activeTab === 'USERS'" (click)="activeTab = 'USERS'">
+      👥 Customer Registry
+    </button>
+    <button class="tab-btn" [class.active-tab]="activeTab === 'AUDIT'" (click)="activeTab = 'AUDIT'">
+      📋 System Audit Trail
+    </button>
+  </div>
+
+  <!-- TAB 1: ACCOUNTS & FREEZES -->
+  <div *ngIf="activeTab === 'ACCOUNTS'">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h3 style="margin: 0; color: #0f172a; font-weight: 800;">Customer Account Oversight</h3>
+      <input type="text" [(ngModel)]="searchTerm" placeholder="Search account number, customer name, email..." style="max-width: 360px;">
+    </div>
+
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Account Number</th>
+          <th>Customer Full Name</th>
+          <th>Type</th>
+          <th>Balance</th>
+          <th>Status</th>
+          <th>Administrative Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let acc of filteredAccounts">
+          <td class="font-mono font-bold">{{ acc.accountNumber }}</td>
+          <td>
+            <div style="font-weight: 700; color: #0f172a;">{{ getCustomerName(acc) }}</div>
+            <div style="font-size: 12px; color: #64748b;">{{ acc.userEmail }}</div>
+          </td>
+          <td>
+            <span class="type-badge">{{ acc.accountType }}</span>
+          </td>
+          <td class="font-bold" style="color: #10b981;">₹{{ acc.balance | number:'1.2-2' }}</td>
+          <td>
+            <span [class.badge-active]="acc.status === 'ACTIVE'" [class.badge-blocked]="acc.status === 'BLOCKED'">
+              {{ acc.status }}
+            </span>
+          </td>
+          <td>
+            <button (click)="toggleBlockAccount(acc)" 
+                    [disabled]="actionLoading"
+                    [class.btn-block-action]="acc.status === 'ACTIVE'"
+                    [class.btn-unblock-action]="acc.status === 'BLOCKED'">
+              {{ acc.status === 'ACTIVE' ? '🔒 Freeze Account' : '🔓 Unblock Account' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- TAB 2: USERS REGISTRY -->
+  <div *ngIf="activeTab === 'USERS'">
+    <h3 style="margin: 0 0 20px 0; color: #0f172a; font-weight: 800;">Registered Customer Roster</h3>
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Customer Name</th>
+          <th>Email Address</th>
+          <th>Phone Number</th>
+          <th>Status</th>
+          <th>Assigned Roles</th>
+          <th>Registration Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let u of users">
+          <td style="font-weight: 700; color: #0f172a;">{{ u.firstName }} {{ u.lastName }}</td>
+          <td>{{ u.email }}</td>
+          <td>{{ u.phoneNumber || 'N/A' }}</td>
+          <td><span class="badge-active">{{ u.status }}</span></td>
+          <td>
+            <span *ngFor="let r of u.roles" class="role-pill">{{ r }}</span>
+          </td>
+          <td style="font-size: 13px; color: #64748b;">{{ u.createdAt | date:'mediumDate' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- TAB 3: AUDIT TRAIL -->
+  <div *ngIf="activeTab === 'AUDIT'">
+    <h3 style="margin: 0 0 20px 0; color: #0f172a; font-weight: 800;">System Security Audit Trail</h3>
+    <div *ngIf="pagedAuditLogs && pagedAuditLogs.content.length > 0">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th>Action</th>
+            <th>Executed By</th>
+            <th>Details & Metadata</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of pagedAuditLogs.content">
+            <td style="font-weight: 700; color: #4f46e5;">{{ log.action }}</td>
+            <td style="font-weight: 600;">{{ log.performedBy }}</td>
+            <td style="font-size: 13px; color: #475569;">{{ log.details }}</td>
+            <td style="font-size: 12px; color: #94a3b8;">{{ log.timestamp | date:'medium' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

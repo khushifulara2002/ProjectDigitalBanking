@@ -1,0 +1,91 @@
+<div class="accounts-page">
+  <div class="header-bar">
+    <h2>Bank Accounts Management</h2>
+    <p>Open new Savings or Checking accounts, add funds, and manage active balances</p>
+  </div>
+
+  <!-- Open Account Form Card -->
+  <div class="card open-card">
+    <h3>Open New Bank Account</h3>
+
+    <div *ngIf="successMessage" class="alert-success">
+      {{ successMessage }}
+    </div>
+
+    <div *ngIf="errorMessage" class="alert-danger">
+      {{ errorMessage }}
+    </div>
+
+    <form [formGroup]="accountForm" (ngSubmit)="onSubmit()" class="form-row">
+      <div class="form-field">
+        <label>Account Type</label>
+        <select formControlName="accountType">
+          <option value="SAVINGS">SAVINGS ACCOUNT</option>
+          <option value="CHECKING">CHECKING ACCOUNT</option>
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label>Initial Opening Deposit (₹)</label>
+        <input type="number" formControlName="initialDeposit">
+      </div>
+
+      <button type="submit" [disabled]="accountForm.invalid || loading" class="btn-primary" style="height: 44px;">
+        {{ loading ? 'Opening...' : '+ Create Account' }}
+      </button>
+    </form>
+  </div>
+
+  <!-- Active Accounts Grid -->
+  <div *ngIf="accounts.length > 0">
+    <h3 class="section-title">My Active Accounts ({{ accounts.length }})</h3>
+    <div class="accounts-grid">
+      <div *ngFor="let acc of accounts" class="card acc-item-card">
+        <div class="acc-badge-bar">
+          <span class="type-badge">{{ acc.accountType }}</span>
+          <span [class.badge-active]="acc.status === 'ACTIVE'" [class.badge-blocked]="acc.status === 'BLOCKED'">
+            {{ acc.status === 'BLOCKED' ? '🛑 BLOCKED BY BANK' : acc.status }}
+          </span>
+        </div>
+
+        <div class="acc-num">{{ acc.accountNumber }}</div>
+
+        <div class="acc-balance-label">Available Balance</div>
+        <div class="acc-balance" [style.color]="acc.status === 'BLOCKED' ? '#ef4444' : '#10b981'">
+          ₹{{ acc.balance | number:'1.2-2' }}
+        </div>
+
+        <!-- Blocked Reason Warning Box -->
+        <div *ngIf="acc.status === 'BLOCKED'" style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 10px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; margin: 12px 0;">
+          🛑 <strong>Blocked by Admin / Bank</strong>: {{ acc.blockReason || 'Regulatory freeze or security risk' }}
+        </div>
+
+        <!-- Add Money Inline Form -->
+        <div *ngIf="activeDepositAccount === acc.accountNumber && acc.status === 'ACTIVE'" style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 12px; border-radius: 8px; margin: 14px 0;">
+          <label style="font-size: 11px; font-weight: 700; color: #15803d; text-transform: uppercase;">Amount to Add (₹)</label>
+          <div style="display: flex; gap: 8px; margin-top: 4px;">
+            <input type="number" [(ngModel)]="depositAmount" style="padding: 6px; font-size: 13px;">
+            <button (click)="confirmDeposit(acc.accountNumber)" [disabled]="depositLoading" class="btn-primary" style="padding: 6px 12px; font-size: 12px;">
+              {{ depositLoading ? 'Processing...' : 'Confirm' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Card Bottom Action Buttons -->
+        <div class="card-action-bar" style="display: flex; gap: 10px; margin-top: 16px; border-top: 1px solid #f1f5f9; padding-top: 14px;">
+          <button *ngIf="acc.status === 'ACTIVE'" (click)="toggleAddMoney(acc.accountNumber)" class="btn-primary" style="flex: 1; padding: 8px; font-size: 12px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none;">
+            💰 Add Money
+          </button>
+
+          <button *ngIf="acc.status === 'BLOCKED'" disabled class="btn-secondary" style="flex: 1; padding: 8px; font-size: 12px; color: #94a3b8; cursor: not-allowed;">
+            🔒 Account Blocked
+          </button>
+          
+          <button (click)="deleteAccount(acc)" class="btn-secondary" style="padding: 8px 12px; font-size: 12px; color: #ef4444; border-color: #fecaca; background: #fef2f2;">
+            🗑️ Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

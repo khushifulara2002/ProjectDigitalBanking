@@ -1,0 +1,92 @@
+<div class="dashboard-container">
+  <!-- Header Banner -->
+  <header class="dashboard-header">
+    <div>
+      <h1 class="welcome-title">Financial Dashboard</h1>
+      <p class="welcome-subtitle">Real-time balances, account management, and instant money transfer</p>
+    </div>
+    <a routerLink="/accounts" class="btn-primary" style="text-decoration: none;">+ Open New Account</a>
+  </header>
+
+  <!-- Error Banner -->
+  <div *ngIf="errorMessage" class="error-alert">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Summary Cards Bar -->
+  <div *ngIf="!loading && accounts.length > 0" class="metrics-grid">
+    <div class="card metric-card">
+      <div class="metric-icon" style="background: #eeeffe; color: #4f46e5;">💰</div>
+      <div>
+        <div class="metric-label">Total Combined Wealth</div>
+        <div class="metric-value">₹{{ totalBalance | number:'1.2-2' }}</div>
+      </div>
+    </div>
+
+    <div class="card metric-card">
+      <div class="metric-icon" style="background: #dcfce7; color: #10b981;">🏦</div>
+      <div>
+        <div class="metric-label">Active Bank Accounts</div>
+        <div class="metric-value">{{ accounts.length }} Accounts</div>
+      </div>
+    </div>
+
+    <div class="card metric-card">
+      <div class="metric-icon" style="background: #fef3c7; color: #d97706;">⚡</div>
+      <div>
+        <div class="metric-label">Quick Action</div>
+        <a routerLink="/transfer" style="color: #4f46e5; font-weight: 700; text-decoration: none; font-size: 15px;">Send Instant Transfer ➔</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    ⌛ Loading financial accounts...
+  </div>
+
+  <!-- Empty State (User has no accounts yet) -->
+  <div *ngIf="!loading && accounts.length === 0" class="card empty-card">
+    <div class="empty-icon">💳</div>
+    <h3>No Active Bank Accounts Yet</h3>
+    <p>You don't have any active bank accounts linked to your digital profile.</p>
+    <a routerLink="/accounts" class="btn-primary" style="text-decoration: none; display: inline-flex;">+ Open Your First Bank Account</a>
+  </div>
+
+  <!-- Accounts Cards Grid -->
+  <div *ngIf="!loading && accounts.length > 0">
+    <h2 class="section-title">Linked Bank Accounts</h2>
+    <div class="accounts-grid">
+      <div *ngFor="let acc of accounts" class="card card-hover account-card">
+        <div class="card-header">
+          <span class="account-type-pill">{{ acc.accountType }}</span>
+          <span [class.badge-active]="acc.status === 'ACTIVE'" [class.badge-blocked]="acc.status === 'BLOCKED'">
+            {{ acc.status === 'BLOCKED' ? '🛑 BLOCKED BY BANK' : acc.status }}
+          </span>
+        </div>
+
+        <div class="account-number">{{ acc.accountNumber }}</div>
+
+        <div class="balance-section">
+          <span class="balance-label">Available Balance</span>
+          <div class="balance-amount" [style.color]="acc.status === 'BLOCKED' ? '#ef4444' : '#10b981'">
+            ₹{{ acc.balance | number:'1.2-2' }}
+          </div>
+        </div>
+
+        <!-- Blocked Reason Warning Box -->
+        <div *ngIf="acc.status === 'BLOCKED'" style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 10px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; margin: 12px 0;">
+          🛑 <strong>Blocked by Bank</strong>: {{ acc.blockReason || 'Regulatory freeze / Security restriction' }}
+        </div>
+
+        <div class="card-actions">
+          <a *ngIf="acc.status === 'ACTIVE'" routerLink="/transfer" class="btn-primary" style="flex: 1; text-decoration: none; font-size: 13px;">Send Money</a>
+          <button *ngIf="acc.status === 'BLOCKED'" disabled class="btn-secondary" style="flex: 1; font-size: 12px; color: #94a3b8; cursor: not-allowed;">
+            🔒 Account Blocked
+          </button>
+          <a routerLink="/transactions" class="btn-secondary" style="flex: 1; text-decoration: none; font-size: 13px; text-align: center;">Statements</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
